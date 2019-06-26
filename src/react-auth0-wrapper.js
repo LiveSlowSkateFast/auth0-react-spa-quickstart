@@ -64,6 +64,21 @@ export const Auth0Provider = ({
     setIsAuthenticated(true);
     setUser(user);
   };
+
+  const getTokenSilently = async (params) => {
+    var token = null
+    try {
+      token = await auth0Client.getTokenSilently(params);
+    } catch (error) {
+      console.log(error)
+      await loginWithPopup()
+      token = await getTokenSilently(params)
+    } finally {
+      return token
+    }
+  }
+
+
   return (
     <Auth0Context.Provider
       value={{
@@ -73,9 +88,10 @@ export const Auth0Provider = ({
         popupOpen,
         loginWithPopup,
         handleRedirectCallback,
+        getTokenSilently,
         getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
         loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
-        getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
+        // getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
         getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
         logout: (...p) => auth0Client.logout(...p)
       }}
