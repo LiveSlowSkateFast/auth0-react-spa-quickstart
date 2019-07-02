@@ -73,7 +73,7 @@ export const Auth0Provider = ({
       token = await auth0Client.getTokenSilently(params);
     } catch (error) {
       console.log(error)
-      await loginWithPopup()
+      await loginWithPopup(params)
       token = await getTokenSilently(params)
     } finally {
       resetIdleTimer()
