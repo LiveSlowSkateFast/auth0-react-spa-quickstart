@@ -16,6 +16,7 @@ export const Auth0Provider = ({
   const [auth0Client, setAuth0] = useState();
   const [loading, setLoading] = useState(true);
   const [popupOpen, setPopupOpen] = useState(false);
+  const [idleTimer, setIdleTimer] = useState();
 
   useEffect(() => {
     const initAuth0 = async () => {
@@ -59,6 +60,7 @@ export const Auth0Provider = ({
   const handleRedirectCallback = async () => {
     setLoading(true);
     await auth0Client.handleRedirectCallback();
+    resetIdleTimer()
     const user = await auth0Client.getUser();
     setLoading(false);
     setIsAuthenticated(true);
@@ -74,10 +76,18 @@ export const Auth0Provider = ({
       await loginWithPopup()
       token = await getTokenSilently(params)
     } finally {
+      resetIdleTimer()
       return token
     }
   }
 
+  const resetIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer)
+    const newTimer = setTimeout(() => {
+      alert('you have been idle for 300 seconds')
+    }, 300000);
+    setIdleTimer(newTimer);
+  }
 
   return (
     <Auth0Context.Provider
