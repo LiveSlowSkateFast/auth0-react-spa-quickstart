@@ -1,7 +1,7 @@
 import React from "react";
 import NavBar from "./components/Navbar";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
-import Profile from "./components/Profile";
+import Profile from "./views/Profile";
 import PrivateRoute from "./components/PrivateRoute";
 import ExternalApi from "./components/ExternalApi";
 import Loading from "./components/Loading"
