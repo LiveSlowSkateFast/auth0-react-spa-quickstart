@@ -6,6 +6,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import ExternalApi from "./components/ExternalApi";
 import Loading from "./components/Loading"
 import { useAuth0 } from "./react-auth0-wrapper";
+import { PageLayout } from "@auth0/cosmos";
 
 function App() {
   const { loading } = useAuth0();
@@ -14,18 +15,20 @@ function App() {
     return <Loading />;
   }
   return (
-    <div className="App">
+    <PageLayout>
       <BrowserRouter>
-        <header>
+        <PageLayout.Header>
           <NavBar />
-        </header>
+        </PageLayout.Header>
+        <PageLayout.Content>
         <Switch>
           <Route path="/" exact />
           <PrivateRoute path="/profile" component={Profile} />
           <PrivateRoute path="/external-api" component={ExternalApi} />
         </Switch>
+        </PageLayout.Content>
       </BrowserRouter>
-    </div>
+    </PageLayout>
   );
 }
 
