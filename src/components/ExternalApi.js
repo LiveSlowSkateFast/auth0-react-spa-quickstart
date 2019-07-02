@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useAuth0 } from "../react-auth0-wrapper";
+import config from "../auth_config.json";
 
 const ExternalApi = () => {
   const [showResult, setShowResult] = useState(false);
@@ -8,7 +9,9 @@ const ExternalApi = () => {
 
   const callApi = async () => {
     try {
-      const token = await getTokenSilently();
+      const token = await getTokenSilently({
+        audience: config.audience,
+      });
 
       const response = await fetch("/api/external", {
         headers: {
