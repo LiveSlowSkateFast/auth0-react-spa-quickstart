@@ -3,6 +3,7 @@ import { Container } from "reactstrap";
 
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import Profile from "./views/Profile";
+import Enrollments from "./views/Enrollments";
 import ExternalApi from "./views/ExternalApi";
 import PrivateRoute from "./components/PrivateRoute";
 import ExternalApi from "./components/ExternalApi";
@@ -24,6 +25,7 @@ function App() {
         <Switch>
           <Route path="/" exact />
           <PrivateRoute path="/profile" component={Profile} />
+                <PrivateRoute path="/enrollments" component={Enrollments} />
           <PrivateRoute path="/external-api" component={ExternalApi} />
         </Switch>
         </Container>
