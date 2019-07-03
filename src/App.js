@@ -1,36 +1,43 @@
 import React from "react";
-import { Container } from "reactstrap";
-
+import { useAuth0 } from "./react-auth0-wrapper";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
+
+import { Container, Col, Row } from "reactstrap";
+
 import Profile from "./views/Profile";
 import Enrollments from "./views/Enrollments";
 import ExternalApi from "./views/ExternalApi";
+
+import NavBar from "./components/NavBar";
+import SideBar from "./components/SideBar";
 import PrivateRoute from "./components/PrivateRoute";
-import ExternalApi from "./components/ExternalApi";
-import Loading from "./components/Loading"
-import { useAuth0 } from "./react-auth0-wrapper";
-import { PageLayout } from "@auth0/cosmos";
+import { Spinner } from "@auth0/cosmos";
 
 function App() {
   const { loading } = useAuth0();
 
   if (loading) {
-    return <Loading />;
+    return <Spinner size="large"/>;
   }
   return (
     <div id="app">
       <BrowserRouter>
-          <NavBar />
+        <NavBar />
         <Container className="mt-5">
-        <Switch>
-          <Route path="/" exact />
-          <PrivateRoute path="/profile" component={Profile} />
+          <Row>
+            <SideBar />
+            <Col lg='10'>
+              <Switch>
+                <Route path="/" exact />
+                <PrivateRoute path="/profile" component={Profile} />
                 <PrivateRoute path="/enrollments" component={Enrollments} />
-          <PrivateRoute path="/external-api" component={ExternalApi} />
-        </Switch>
+                <PrivateRoute path="/external-api" component={ExternalApi} />
+              </Switch>
+            </Col>
+          </Row>
         </Container>
       </BrowserRouter>
-    </div>
+    </div >
   );
 }
 
