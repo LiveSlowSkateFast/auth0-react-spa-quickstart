@@ -1,5 +1,6 @@
 import React from "react";
-import NavBar from "./components/Navbar";
+import { Container } from "reactstrap";
+
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import Profile from "./views/Profile";
 import PrivateRoute from "./components/PrivateRoute";
@@ -15,20 +16,18 @@ function App() {
     return <Loading />;
   }
   return (
-    <PageLayout>
+    <div id="app">
       <BrowserRouter>
-        <PageLayout.Header>
           <NavBar />
-        </PageLayout.Header>
-        <PageLayout.Content>
+        <Container className="mt-5">
         <Switch>
           <Route path="/" exact />
           <PrivateRoute path="/profile" component={Profile} />
           <PrivateRoute path="/external-api" component={ExternalApi} />
         </Switch>
-        </PageLayout.Content>
+        </Container>
       </BrowserRouter>
-    </PageLayout>
+    </div>
   );
 }
 
