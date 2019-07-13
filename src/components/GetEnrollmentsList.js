@@ -1,10 +1,13 @@
 import React, { useState } from "react";
-import { Button, Table } from '@auth0/cosmos'
-import { Collapse } from 'reactstrap'
+import { useAuth0 } from "../react-auth0-wrapper";
+
+import config from "../auth_config.json";
+
+import { Button, ResourceList } from '@auth0/cosmos'
+import { Collapse, Container, Row } from 'reactstrap'
 
 import Highlight from "./Highlight";
-import { useAuth0 } from "../react-auth0-wrapper";
-import config from "../auth_config.json";
+import EnrollmentsListItem from "./EnrollmentsListItem";
 
 const GetEnrollmentsList = () => {
   const [enrollments, setEnrollments] = useState([]);
@@ -37,21 +40,38 @@ const GetEnrollmentsList = () => {
     }
   };
 
+  const makeEnrollmentsListItems = (enrollments) => enrollments.map(enrollment => {
+    const item = { ...enrollment }
+
+    return {
+      id: item.id,
+      type: item.authenticator_type === "otp" ? "totp" :
+        item.authenticator_type === "recovery-code" ? "recovery" :
+          item.oob_channel === "sms" ? "sms" :
+            item.oob_channel === "auth0" ? "push" :
+              item.oob_channel === "email" ? "email" : "",
+      deviceId: item.name,
+      status: item.active ? "active" : "disabled",
+    }
+  })
+
   return (
-    <>
-      <Button color="primary" className="mt-5" onClick={getEnrollments} loading={awaitingResult}>
-        Get Enrollments
-      </Button>
-      <Collapse isOpen={showResult}>
-        <Table
-          items={enrollments} >
-          <Table.Column field="authenticator_type" title="Type" />
-          <Table.Column field="oob_channel" title="Channel" />
-          <Table.Column field="name" title="id" />
-        </Table>
-        <Highlight>{JSON.stringify(enrollments, null, 2)}</Highlight>
-      </Collapse>
-    </>
+    <Container>
+      <Row>
+        <Button color="primary" className="mt-5" onClick={getEnrollments} loading={awaitingResult}>
+          Get Enrollments
+        </Button>
+      </Row>
+      <Row>
+        <Collapse isOpen={showResult}>
+          <ResourceList
+            items={makeEnrollmentsListItems(enrollments)}
+            renderItem={item => <EnrollmentsListItem {...item} />}
+          />
+          <Highlight>{JSON.stringify(enrollments, null, 2)}</Highlight>
+        </Collapse>
+      </Row>
+    </ Container>
   );
 };
 
