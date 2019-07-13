@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth0 } from "../react-auth0-wrapper";
 
 import config from "../auth_config.json";
@@ -39,6 +39,12 @@ const GetEnrollmentsList = () => {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    async function loadEnrollments() {
+      await getEnrollments()}
+      loadEnrollments();
+    }, [])
 
   const makeEnrollmentsListItems = (enrollments) => enrollments.map(enrollment => {
     const item = { ...enrollment }
