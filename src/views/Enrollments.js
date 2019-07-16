@@ -4,12 +4,14 @@ import { Container } from "reactstrap";
 import config from "../auth_config.json";
 
 import { useAuth0 } from "../react-auth0-wrapper";
-import { Spinner, PageHeader } from "@auth0/cosmos";
+import { Spinner, PageHeader, Button } from "@auth0/cosmos";
 import EnrollmentsList from "../components/EnrollmentsList";
+import EnrollmentAddDialog from "../components/EnrollmentsAddDialog.js";
 
 const Enrollments = () => {
   const [enrollments, setEnrollments] = useState([]);
   const [loadingEnrollments, setLoadingEnrollments] = useState(true);
+  const [showAddDialog, setShowAddDialog] = useState(false)
 
   const { getTokenSilently } = useAuth0();
 
@@ -51,6 +53,34 @@ const Enrollments = () => {
     }
   }
 
+  const addEnrollement = async (type, identifier) => {
+    const requestBody = {
+      authenticator_types: type === "totp" ? ["otp"] : ["oob"],
+    }
+    if (type === "email") {
+      requestBody.oob_channels = ["email"]
+      requestBody.email = identifier
+    }
+    if (type === "sms") {
+      requestBody.oob_channels = ["sms"]
+      requestBody.phone_number = identifier
+    }
+    try {
+      const response = await fetch("https://" + config.domain + "/mfa/associate", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getMFAToken()}`,
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     const loadEnrollments = async () => {
       await getEnrollments()
@@ -61,6 +91,12 @@ const Enrollments = () => {
   return (
     <Container className="mb-5">
       <PageHeader title="Multi-Factor Enrollments" />
+      <Button onClick={() => setShowAddDialog(true)}>Add Enrollment</Button>
+      <EnrollmentAddDialog
+        visible={showAddDialog}
+        closeDialog={() => setShowAddDialog(!showAddDialog)}
+        addEnrollment={(type, identifier) => addEnrollement(type, identifier)}
+      />
       {enrollments.length === 0 ?
         <Spinner size="large" /> :
         <EnrollmentsList
