@@ -4,11 +4,11 @@ import { ResourceList, Button, Label } from '@auth0/cosmos'
 
 const EnrollmentsListItem = (props) => {
 
-  const { id, type, deviceId, status } = props
+  const { key, type, deviceId, status, deleteEnrollment } = props
 
   return (
     <ResourceList.Item
-      id={id}
+      id={key}
       title={type === "totp" ? "Time Based One Time Password" :
         type === "recovery" ? "Recovery Code" :
           type === "sms" ? "SMS" :
@@ -24,7 +24,7 @@ const EnrollmentsListItem = (props) => {
                 ""}
       actions={[
         <Button icon="more" onClick={() => { }} label="More" />,
-        <Button icon="delete" onClick={() => { }} label="Remove Enrollment" />
+        <Button icon="delete" onClick={() => {deleteEnrollment()}} label="Remove Enrollment" />
       ]}
     >
       {status === "active" ?
