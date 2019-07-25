@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useContext } from "react";
 import createAuth0Client from "@auth0/auth0-spa-js";
 
+import config from "./auth_config.json";
+
 const DEFAULT_REDIRECT_CALLBACK = () =>
   window.history.replaceState({}, document.title, window.location.pathname);
+
+const isRequired = (param) => { throw new Error(param + " is required"); };
 
 export const Auth0Context = React.createContext();
 export const useAuth0 = () => useContext(Auth0Context);
@@ -13,10 +17,51 @@ export const Auth0Provider = ({
 }) => {
   const [isAuthenticated, setIsAuthenticated] = useState();
   const [user, setUser] = useState();
+  const [profile, setProfile] = useState();
   const [auth0Client, setAuth0] = useState();
   const [loading, setLoading] = useState(true);
   const [popupOpen, setPopupOpen] = useState(false);
   const [idleTimer, setIdleTimer] = useState();
+
+  const createProfile = (user) => {
+    const namespace = 'https://localhost:3000/'
+    const obj = {}
+    if (user) {
+      Object.keys(user).map(key => {
+        if (key.startsWith(namespace)) {
+          obj[key.replace(namespace, '')] = user[key]
+        }
+      })
+    }
+    return obj
+  }
+
+  const getProfileToken = async () => getTokenSilently({
+    audience: "https://" + config.domain + "/api/v2/",
+    scope: "update:current_user_metadata update:current_user"
+  });
+
+  const updateUserMetadata = async (path, value = isRequired("value")) => {
+
+    try {
+      const response = await fetch("https://" + config.domain + "/api/v2/users/" + user.sub, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${await getProfileToken()}`
+        },
+        body: JSON.stringify({ user_metadata: { [path]: value } })
+      });
+
+      if (response.status === 200) {
+        const responseBody = await response.json()
+        setProfile(responseBody.user_metadata)
+      }
+      return response
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
   useEffect(() => {
     const initAuth0 = async () => {
@@ -35,6 +80,7 @@ export const Auth0Provider = ({
       if (isAuthenticated) {
         const user = await auth0FromHook.getUser();
         setUser(user);
+        setProfile(await createProfile(user));
       }
 
       setLoading(false);
@@ -54,6 +100,7 @@ export const Auth0Provider = ({
     }
     const user = await auth0Client.getUser();
     setUser(user);
+    setProfile(await createProfile());
     setIsAuthenticated(true);
   };
 
@@ -65,6 +112,7 @@ export const Auth0Provider = ({
     setLoading(false);
     setIsAuthenticated(true);
     setUser(user);
+    setProfile(await createProfile());
   };
 
   const getTokenSilently = async (params) => {
@@ -84,7 +132,7 @@ export const Auth0Provider = ({
   const resetIdleTimer = () => {
     if (idleTimer) clearTimeout(idleTimer)
     const newTimer = setTimeout(() => {
-      alert('you have been idle for 300 seconds')
+      auth0Client.logout()
     }, 300000);
     setIdleTimer(newTimer);
   }
@@ -94,6 +142,8 @@ export const Auth0Provider = ({
       value={{
         isAuthenticated,
         user,
+        profile,
+        updateUserMetadata,
         loading,
         popupOpen,
         loginWithPopup,
@@ -101,7 +151,6 @@ export const Auth0Provider = ({
         getTokenSilently,
         getIdTokenClaims: (...p) => auth0Client.getIdTokenClaims(...p),
         loginWithRedirect: (...p) => auth0Client.loginWithRedirect(...p),
-        // getTokenSilently: (...p) => auth0Client.getTokenSilently(...p),
         getTokenWithPopup: (...p) => auth0Client.getTokenWithPopup(...p),
         logout: (...p) => auth0Client.logout(...p)
       }}
