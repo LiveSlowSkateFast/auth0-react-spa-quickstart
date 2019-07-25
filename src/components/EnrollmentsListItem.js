@@ -23,8 +23,7 @@ const EnrollmentsListItem = (props) => {
               type === "email" ? "email" :
                 ""}
       actions={[
-        <Button icon="more" onClick={() => { }} label="More" />,
-        <Button icon="delete" onClick={() => {deleteEnrollment()}} label="Remove Enrollment" />
+        <Button icon="delete" onClick={() => {deleteEnrollment()}} label="Remove Enrollment" />,
       ]}
     >
       {status === "active" ?

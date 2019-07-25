@@ -4,16 +4,20 @@ import { Container } from "reactstrap";
 import config from "../auth_config.json";
 
 import { useAuth0 } from "../react-auth0-wrapper";
-import { Spinner, PageHeader, Button } from "@auth0/cosmos";
+import { Spinner, PageHeader, Button, Form, Switch, Select, Stack, Heading } from "@auth0/cosmos";
 import EnrollmentsList from "../components/EnrollmentsList";
 import EnrollmentAddDialog from "../components/EnrollmentsAddDialog.js";
+import Highlight from "../components/Highlight.js";
 
 const Enrollments = () => {
-  const [enrollments, setEnrollments] = useState([]);
+  const { getTokenSilently, profile, loginWithRedirect, updateUserMetadata } = useAuth0();
+  const [enrollments, setEnrollments] = useState();
   const [loadingEnrollments, setLoadingEnrollments] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false)
+  const [canEnable, setCanEnable] = useState(false)
+  const [beginEnrollmentType, setBeginEnrollmentType] = useState()
+  const [toggleMfaError, setToggleMfaError] = useState()
 
-  const { getTokenSilently } = useAuth0();
 
   const getMFAToken = async () => getTokenSilently({
     audience: "https://" + config.domain + "/mfa/",
@@ -28,10 +32,9 @@ const Enrollments = () => {
           Authorization: `Bearer ${await getMFAToken()}`
         }
       });
-
-      setEnrollments(await response.json())
+      const enrollments = await response.json()
       setLoadingEnrollments(false);
-
+      return enrollments
     } catch (error) {
       console.error(error);
       setLoadingEnrollments(false);
@@ -81,29 +84,73 @@ const Enrollments = () => {
     }
   };
 
+  const toggleMFA = async () => {
+    updateUserMetadata("mfaOnLogin", profile.mfaOnLogin ? false : true)
+  }
+
   useEffect(() => {
     const loadEnrollments = async () => {
-      await getEnrollments()
+      const enrollments = await getEnrollments()
+      setEnrollments(enrollments)
+      const activeEnrollments = await enrollments.filter(enrollment => (
+        enrollment.active && enrollment.authenticator_type !== 'recovery-code'))
+      setCanEnable(activeEnrollments.length > 0)
     }
     loadEnrollments();
+    // eslint-disable-next-line
   }, [])
 
   return (
     <Container className="mb-5">
       <PageHeader title="Multi-Factor Enrollments" />
-      <Button onClick={() => setShowAddDialog(true)}>Add Enrollment</Button>
+      <Form.Field label="Enable MFA On Login" helpText="You must have an active enrollment inorder to enable MFA on login.">
+        <Switch
+          label="Enable MFA" on={profile.mfaOnLogin}
+          onChange={() => toggleMFA()}
+          readOnly={!canEnable}
+        />
+      </Form.Field>
+      <Form.Field label="Add an Authenticator" helpText="This will redirect you">
+        <Stack>
+          <Select
+            id="selectAuthenticatorType"
+            value={beginEnrollmentType}
+            placeholder="Choose an Authenticator"
+            options={[
+              { text: "Guardian Authenticator", value: "guardian" },
+              { text: "Google Authenticator", value: "google" },
+              { text: "Duo Authenticator", value: "duo" },
+            ]}
+            onChange={e => setBeginEnrollmentType(e.target.value)} />
+          <Button
+            disabled={!beginEnrollmentType}
+            appearance="primary"
+            onClick={(e) => {
+              loginWithRedirect({
+                redirect_uri: window.location.origin,
+                scope: "enroll:" + document.getElementById("selectAuthenticatorType").value,
+                appState: { targetUrl: 'enrollments' }
+              })
+            }} >Begin Enrollment</Button>
+        </Stack>
+      </Form.Field>
+      {/* <Button onClick={() => setShowAddDialog(true)}>Add Enrollment</Button> */}
       <EnrollmentAddDialog
         visible={showAddDialog}
         closeDialog={() => setShowAddDialog(!showAddDialog)}
         addEnrollment={(type, identifier) => addEnrollement(type, identifier)}
       />
-      {enrollments.length === 0 ?
+      {!enrollments ?
         <Spinner size="large" /> :
-        <EnrollmentsList
-          enrollments={enrollments}
-          visible={!loadingEnrollments}
-          handleEnrollmentDelete={(enrollmentId) => deleteEnrollment(enrollmentId)}
-        />}
+        <>
+          <Heading size="4">Current Enrollments</Heading>
+          <EnrollmentsList
+            enrollments={enrollments}
+            visible={!loadingEnrollments}
+            handleEnrollmentDelete={(enrollmentId) => deleteEnrollment(enrollmentId)}
+          />
+        </>}
+      <Highlight>{JSON.stringify(enrollments, null, 2)}</Highlight>
     </Container>
   );
 };
