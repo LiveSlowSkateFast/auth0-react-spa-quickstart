@@ -2,11 +2,13 @@ import React, { useState } from "react";
 
 import { Dialog, Form, Select, TextInput } from '@auth0/cosmos'
 import { Collapse } from 'reactstrap'
+import QRCode from 'qrcode.react'
 
 import Highlight from "./Highlight";
+import EnrollmentsConfirmField from "./EnrollmentsConfirmField";
 
 const EnrollmentAddDialog = (props) => {
-  const { visible, closeDialog, addEnrollment } = props
+  const { visible, closeDialog, addEnrollment, verifyEnrollment } = props
   const [authenticatorType, setAuthenticatorType] = useState('totp')
   const [extendedForm, setExtendedForm] = useState(null)
   const [identifier, setIdentifier] = useState("")
@@ -68,6 +70,10 @@ const EnrollmentAddDialog = (props) => {
           />
         </Form>
         <Collapse isOpen={result} >
+          <QRCode value={result ? result.barcode_uri : ''} />
+          <EnrollmentsConfirmField
+            verifyEnrollment={(otpCode, bindingCode) => verifyEnrollment(otpCode, bindingCode)}
+          />
           <Highlight>{JSON.stringify(result, null, 2)}</Highlight>
         </Collapse>
       </Dialog>

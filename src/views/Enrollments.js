@@ -84,6 +84,35 @@ const Enrollments = () => {
     }
   };
 
+  // DO NOT DO THIS IN REAL LIFE.  THIS SHOULD BE SERVER BASED
+  const verifyEnrollment = async (otpCode, bindingCode) => {
+
+    const requestBody = {
+      grant_type: 'http://auth0.com/oauth/grant-type/mfa-otp',
+      client_id: config.clientId,
+      mfa_token: await getMFAToken(),
+      //THIS LINE COMPROMISES THE ENTIRE SECURITY OF THE APP
+      client_secret: config.clientSecret,
+      otp: otpCode,
+    }
+
+    if (bindingCode) requestBody.binding_code = bindingCode
+
+    try {
+      const response = await fetch("https://" + config.domain + "/oauth/token", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      return await response.json();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const toggleMFA = async () => {
     updateUserMetadata("mfaOnLogin", profile.mfaOnLogin ? false : true)
   }
@@ -110,7 +139,8 @@ const Enrollments = () => {
           readOnly={!canEnable}
         />
       </Form.Field>
-      <Form.Field label="Add an Authenticator" helpText="This will redirect you">
+
+      {/* <Form.Field label="Add an Authenticator" helpText="This will redirect you">
         <Stack>
           <Select
             id="selectAuthenticatorType"
@@ -133,12 +163,15 @@ const Enrollments = () => {
               })
             }} >Begin Enrollment</Button>
         </Stack>
-      </Form.Field>
-      {/* <Button onClick={() => setShowAddDialog(true)}>Add Enrollment</Button> */}
+      </Form.Field> */}
+
+      <Button onClick={() => setShowAddDialog(true)}>Add Enrollment</Button>
+
       <EnrollmentAddDialog
         visible={showAddDialog}
         closeDialog={() => setShowAddDialog(!showAddDialog)}
         addEnrollment={(type, identifier) => addEnrollement(type, identifier)}
+        verifyEnrollment={ (otpCode, bindingCode) => verifyEnrollment(otpCode, bindingCode)}
       />
       {!enrollments ?
         <Spinner size="large" /> :
