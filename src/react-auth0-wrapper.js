@@ -38,7 +38,7 @@ export const Auth0Provider = ({
 
   const getProfileToken = async () => getTokenSilently({
     audience: "https://" + config.domain + "/api/v2/",
-    scope: "update:current_user_metadata update:current_user"
+    scope: "update:current_user_metadata"
   });
 
   const updateUserMetadata = async (path, value = isRequired("value")) => {
