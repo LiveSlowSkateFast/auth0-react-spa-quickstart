@@ -9,10 +9,11 @@ import EnrollmentsConfirmField from "./EnrollmentsConfirmField";
 
 const EnrollmentAddDialog = (props) => {
   const { visible, closeDialog, addEnrollment, verifyEnrollment } = props
-  const [authenticatorType, setAuthenticatorType] = useState('totp')
+  const [authenticatorType, setAuthenticatorType] = useState('push')
   const [extendedForm, setExtendedForm] = useState(null)
   const [identifier, setIdentifier] = useState("")
-  const [result, setResult] = useState(null)
+  const [result, setResult] = useState()
+  const [qrCode, setQrCode] = useState()
 
   const handleChooseAutnenticatorType = (authenticatorType) => {
     setAuthenticatorType(authenticatorType)
@@ -39,7 +40,9 @@ const EnrollmentAddDialog = (props) => {
 
   const sendVerification = async (e) => {
     e.preventDefault()
-    setResult(await addEnrollment(authenticatorType, identifier))
+    const response = await addEnrollment(authenticatorType, identifier)
+    setResult(response)
+    if (response.barcode_uri) setQrCode(<QRCode value={response.barcode_uri} />)
   }
 
   return (
@@ -54,6 +57,7 @@ const EnrollmentAddDialog = (props) => {
             <Select
               value={authenticatorType}
               options={[
+                { text: "Push Notification", value: "push" },
                 { text: "Time Based One Time Password", value: "totp" },
                 { text: "SMS", value: "sms" },
                 { text: "Email", value: "email" },
@@ -70,9 +74,9 @@ const EnrollmentAddDialog = (props) => {
           />
         </Form>
         <Collapse isOpen={result} >
-          <QRCode value={result ? result.barcode_uri : ''} />
+          {qrCode}
           <EnrollmentsConfirmField
-            verifyEnrollment={(otpCode, bindingCode) => verifyEnrollment(otpCode, bindingCode)}
+            verifyEnrollment={(otpCode) => verifyEnrollment(otpCode, result ? result.oob_code : null)}
           />
           <Highlight>{JSON.stringify(result, null, 2)}</Highlight>
         </Collapse>

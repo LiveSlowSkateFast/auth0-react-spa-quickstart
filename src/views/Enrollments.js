@@ -57,6 +57,7 @@ const Enrollments = () => {
   }
 
   const addEnrollement = async (type, identifier) => {
+
     const requestBody = {
       authenticator_types: type === "totp" ? ["otp"] : ["oob"],
     }
@@ -68,6 +69,8 @@ const Enrollments = () => {
       requestBody.oob_channels = ["sms"]
       requestBody.phone_number = identifier
     }
+    if (type === "push") requestBody.oob_channels = ["auth0"]
+
     try {
       const response = await fetch("https://" + config.domain + "/mfa/associate", {
         method: "POST",
@@ -85,18 +88,24 @@ const Enrollments = () => {
   };
 
   // DO NOT DO THIS IN REAL LIFE.  THIS SHOULD BE SERVER BASED
-  const verifyEnrollment = async (otpCode, bindingCode) => {
+  const verifyEnrollment = async (otpCode, oobCode) => {
 
     const requestBody = {
-      grant_type: 'http://auth0.com/oauth/grant-type/mfa-otp',
       client_id: config.clientId,
       mfa_token: await getMFAToken(),
       //THIS LINE COMPROMISES THE ENTIRE SECURITY OF THE APP
       client_secret: config.clientSecret,
-      otp: otpCode,
+      // otp: otpCode,
     }
 
-    if (bindingCode) requestBody.binding_code = bindingCode
+    if (oobCode) {
+      requestBody.grant_type= 'http://auth0.com/oauth/grant-type/mfa-oob'
+      requestBody.oob_code = oobCode
+      requestBody.binding_code = otpCode
+    } else {
+      requestBody.grant_type= 'http://auth0.com/oauth/grant-type/mfa-otp'
+      requestBody.otp = otpCode
+    }
 
     try {
       const response = await fetch("https://" + config.domain + "/oauth/token", {
@@ -122,7 +131,9 @@ const Enrollments = () => {
       const enrollments = await getEnrollments()
       setEnrollments(enrollments)
       const activeEnrollments = await enrollments.filter(enrollment => (
-        enrollment.active && enrollment.authenticator_type !== 'recovery-code'))
+        enrollment.active &&
+        enrollment.authenticator_type !== 'recovery-code' &&
+        enrollment.oob_channel !== 'email'))
       setCanEnable(activeEnrollments.length > 0)
     }
     loadEnrollments();
