@@ -87,15 +87,12 @@ const Enrollments = () => {
     }
   };
 
-  // DO NOT DO THIS IN REAL LIFE.  THIS SHOULD BE SERVER BASED
   const verifyEnrollment = async (otpCode, oobCode) => {
 
     const requestBody = {
       client_id: config.clientId,
       mfa_token: await getMFAToken(),
-      //THIS LINE COMPROMISES THE ENTIRE SECURITY OF THE APP
-      client_secret: config.clientSecret,
-      // otp: otpCode,
+      otp: otpCode,
     }
 
     if (oobCode) {
